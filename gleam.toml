@@ -21,6 +21,7 @@ gleam_httpc = ">= 5.0.0 and < 6.0.0"
 youid = ">= 1.6.1 and < 2.0.0"
 mist = ">= 6.0.3 and < 7.0.0"
 gleam_http = ">= 4.5.0 and < 5.0.0"
+glopenai = ">= 1.0.0 and < 2.0.0"
 
 [dev_dependencies]
 gleeunit = ">= 1.0.0 and < 2.0.0"
