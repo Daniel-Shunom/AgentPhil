@@ -2,6 +2,7 @@
 //// recieve user message, an agent message, or a tool call message.
 //// Probably something like that.
 
+import env/env
 import agent/agent_job
 import gleam/erlang/process
 import gleam/list
@@ -9,9 +10,9 @@ import gleam/option
 import gleam/otp/actor
 import ws/ws_msg
 
-pub fn create_agent_actor() {
+pub fn create_agent_actor(keys: env.Keys) {
   let assert Ok(started) =
-    actor.new(init_state())
+    actor.new(init_state(keys))
     |> actor.on_message(msg_handler)
     |> actor.named(process.new_name("BASE_AGENT"))
     // Ideally, we would want this to be discoverabe from a file or something
@@ -31,14 +32,16 @@ pub type AgentState {
     msg_history: List(AgentMessage),
     job_registry: agent_job.AgentJobRegistry,
     ws_subject: option.Option(process.Subject(ws_msg.ModelResponse)),
+    api_keys: env.Keys
   )
 }
 
-pub fn init_state() -> AgentState {
+pub fn init_state(keys) -> AgentState {
   AgentState(
     msg_history: list.new(),
     job_registry: agent_job.create_job_registry(),
     ws_subject: option.None,
+    api_keys: keys
   )
 }
 

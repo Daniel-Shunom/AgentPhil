@@ -15,7 +15,7 @@ pub type GlobalCtx {
 
 pub fn init_state() {
   dot_env.load_default()
-  let agent_actor = agent_actor.create_agent_actor()
   let assert Ok(env_vars) = env.load_env()
+  let agent_actor = agent_actor.create_agent_actor(env_vars.api_keys)
   GlobalCtx(agent_actor, env_vars)
 }
