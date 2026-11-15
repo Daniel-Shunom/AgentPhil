@@ -1,4 +1,4 @@
-import ctx
+import state/ctx
 import gleam/erlang/process
 import mist
 import router/router

@@ -1,5 +1,5 @@
 import agent/agent_actor
-import ctx
+import state/ctx
 import gleam/erlang/process
 import gleam/io
 import gleam/option
