@@ -114,8 +114,8 @@ fn handle_reply(
   response: Result(#(chatgpt.OpenAIClient, chatgpt.Reply), chatgpt.ClientError),
 ) -> actor.Next(AgentState, AgentMessage) {
   case response {
-    Error(_) -> {
-      notify(state, "Model request failed; please try again.")
+    Error(error) -> {
+      notify(state, chatgpt.describe_error(error))
       actor.continue(state)
     }
 
