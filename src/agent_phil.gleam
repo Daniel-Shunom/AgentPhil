@@ -1,7 +1,7 @@
-import state/ctx
 import gleam/erlang/process
 import mist
 import router/router
+import state/ctx
 
 pub fn main() -> Nil {
   let state = ctx.init_state()

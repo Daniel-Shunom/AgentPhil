@@ -1,11 +1,11 @@
 import agent/agent_actor
-import state/ctx
 import gleam/erlang/process
 import gleam/io
 import gleam/option
 import gleam/otp/actor
 import gleam/string
 import mist
+import state/ctx
 import ws/ws_msg.{type ModelResponse, ModelResponse}
 
 pub fn ws_handler(req, state: ctx.GlobalCtx) {
