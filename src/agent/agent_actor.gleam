@@ -40,7 +40,7 @@ pub fn init_state(keys: env.Keys) -> AgentState {
     oai_client: chatgpt.new(
       keys.open_ai,
       keys.system_prompt,
-      "gpt-4.1-mini",
+      "gpt-6-luna",
       [],
     ),
     pending_tool_calls: [],
