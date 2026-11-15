@@ -1,19 +1,17 @@
-import gleam/int
 import envoy
+import gleam/int
 import gleam/result
 
 pub type EnvVars {
-  EnvVars(
-    port: Int,
-    bind_ip: String,
-    api_keys: Keys
-  )
+  EnvVars(port: Int, bind_ip: String, api_keys: Keys)
 }
 
 pub type Keys {
   Keys(
     open_ai: String,
-    anthropic: String
+    anthropic: String,
+    agent_name: String,
+    system_prompt: String,
   )
 }
 
@@ -23,14 +21,16 @@ pub fn load_env() {
   use port <- result.try(int.parse(port_str))
   use openai_key <- result.try(envoy.get("OPENAI_API_KEY"))
   use anth_key <- result.try(envoy.get("ANTHROPIC_API_KEY"))
-  let keys = Keys(
-    open_ai: openai_key,
-    anthropic: anth_key
-  )
-  EnvVars(
-    port: port,
-    bind_ip: bind_ip,
-    api_keys: keys
-  )
+  use agent_name <- result.try(envoy.get("AGENT_NAME"))
+  use sys_prompt <- result.try(envoy.get("SYSTEM_PROMPT"))
+
+  let keys =
+    Keys(
+      open_ai: openai_key,
+      anthropic: anth_key,
+      agent_name: agent_name,
+      system_prompt: sys_prompt,
+    )
+  EnvVars(port: port, bind_ip: bind_ip, api_keys: keys)
   |> Ok
 }
