@@ -1,9 +1,14 @@
+import simplifile
 import envoy
 import gleam/int
 import gleam/result
 
 pub type EnvVars {
-  EnvVars(port: Int, bind_ip: String, api_keys: Keys)
+  EnvVars(
+    port: Int,
+    bind_ip: String,
+    api_keys: Keys
+  )
 }
 
 pub type Keys {
@@ -22,7 +27,11 @@ pub fn load_env() {
   use openai_key <- result.try(envoy.get("OPENAI_API_KEY"))
   use anth_key <- result.try(envoy.get("ANTHROPIC_API_KEY"))
   use agent_name <- result.try(envoy.get("AGENT_NAME"))
-  use sys_prompt <- result.try(envoy.get("SYSTEM_PROMPT"))
+  use sys_prompt_path <- result.try(envoy.get("SYSTEM_PROMPT_PATH"))
+  use sys_prompt <- result.try(
+    simplifile.read(sys_prompt_path)
+    |> result.replace_error(Nil)
+  )
 
   let keys =
     Keys(
