@@ -4,6 +4,7 @@ import gleam/dynamic.{type Dynamic}
 import gleam/http/request.{type Request}
 import gleam/http/response.{type Response}
 import gleam/httpc
+import gleam/int
 import gleam/list
 import gleam/option.{type Option, None, Some}
 import gleam/result
@@ -119,7 +120,15 @@ fn complete(
   let request = chat.new_create_request(client.model, history)
   let request = case client.tools {
     [] -> request
-    tools -> chat.with_tools(request, list.map(tools, encode_tool))
+    tools -> {
+      let request = chat.with_tools(request, list.map(tools, encode_tool))
+      // Luna's Chat Completions endpoint requires reasoning off for tools.
+      case client.model {
+        "gpt-6-luna" ->
+          chat.with_reasoning_effort(request, shared.ReasoningNone)
+        _ -> request
+      }
+    }
   }
   use response <- result.try(
     client.transport(chat.create_request(client.config, request))
@@ -148,6 +157,74 @@ fn complete(
     ),
     Reply(message.content, message.refusal, calls),
   ))
+}
+
+/// Describe failures without exposing raw response bodies or credentials.
+pub fn describe_error(failure: ClientError) -> String {
+  let detail = case failure {
+    TransportError(httpc.ResponseTimeout) -> {
+      "the provider timed out. Please try again." 
+    }
+
+    TransportError(httpc.FailedToConnect(_, _)) -> {
+      "could not connect to the provider. Check network and TLS configuration."
+    }
+
+    TransportError(httpc.InvalidUtf8Response) -> {
+      "the provider returned invalid text."
+    }
+
+    ProviderError(error.ApiResponseError(status, api)) -> {
+      let reason = case status, api.param {
+        400, Some("reasoning_effort") -> {
+          "the model rejected the reasoning setting. Function tools on gpt-6-luna require reasoning_effort=none with Chat Completions."
+        }
+
+        401, _ -> {
+          "authentication failed. Check OPENAI_API_KEY."
+        }
+
+        403, _ -> {
+          "access denied. Check API project permissions."
+        }
+
+        404, _ -> {
+          "the configured model is unavailable or this API key lacks access."
+        }
+
+        429, _ -> {
+          "the provider rate limit or quota was exceeded. Check usage and billing."
+        }
+
+        400, _ -> {
+          "the provider rejected the request. Check model settings and tool schemas."
+        }
+
+        _, _ -> "the provider returned an API error."
+      }
+      "(HTTP " <> int.to_string(status) <> "): " <> reason
+    }
+    ProviderError(error.JsonDecodeError(_, _)) -> {
+      "could not decode the provider response."
+    }
+
+    ProviderError(error.UnexpectedResponse(status, _)) -> {
+      "unexpected provider HTTP status " <> int.to_string(status) <> "."
+    }
+
+    NoChoices -> {
+      "the provider returned no choices."
+    }
+
+    ToolsPending -> {
+      "tool execution is still pending. Wait for the tool results."
+    }
+
+    InvalidToolResults -> {
+      "tool results did not match the pending tool calls."
+    }
+  }
+  "Model request failed " <> detail
 }
 
 fn encode_tool(tool: Tool) -> chat.ChatCompletionTool {
