@@ -163,7 +163,7 @@ fn complete(
 pub fn describe_error(failure: ClientError) -> String {
   let detail = case failure {
     TransportError(httpc.ResponseTimeout) -> {
-      "the provider timed out. Please try again." 
+      "the provider timed out. Please try again."
     }
 
     TransportError(httpc.FailedToConnect(_, _)) -> {
