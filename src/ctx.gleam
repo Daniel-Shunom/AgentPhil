@@ -1,7 +1,8 @@
 //// Server State is loaded here
+
+import agent/agent_actor
 import dot_env
 import env/env
-import agent/agent_actor
 import gleam/erlang/process
 
 pub type GlobalCtx {
@@ -9,7 +10,7 @@ pub type GlobalCtx {
     agent_subj: process.Subject(agent_actor.AgentMessage),
     // Where we send user messages to and the actor relays them to the
     // model provider
-    env_vars: env.EnvVars
+    env_vars: env.EnvVars,
   )
 }
 
