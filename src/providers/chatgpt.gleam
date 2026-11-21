@@ -84,6 +84,9 @@ pub fn send_message(
 ) -> Result(#(OpenAIClient, Reply), ClientError) {
   case client.pending {
     [] -> complete(client, [chat.user_message(text)])
+    // The error state should ideally not block messages
+    // It should intstead wait for the current tool call to finish
+    // and then submit
     _ -> Error(ToolsPending)
   }
 }
@@ -217,7 +220,7 @@ pub fn describe_error(failure: ClientError) -> String {
     }
 
     ToolsPending -> {
-      "tool execution is still pending. Wait for the tool results."
+      "tool execution is still pending. Message will be sent after the current tool call."
     }
 
     InvalidToolResults -> {

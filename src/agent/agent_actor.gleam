@@ -45,6 +45,7 @@ pub type AgentState {
     pending_tool_calls: List(chatgpt.ToolCall),
     tool_results: dict.Dict(String, chatgpt.ToolResult),
     context: List(String),
+    incoming_user_msgs: List(String),
     job_registry: agent_job.AgentJobRegistry,
     tool_box_subject: option.Option(
       process.Subject(tools.ToolMsg(AgentMessage)),
@@ -62,9 +63,10 @@ pub fn init_state(keys: env.Keys) -> AgentState {
       "gpt-6-luna",
       tools.definitions(),
     ),
-    pending_tool_calls: [],
+    pending_tool_calls: list.new(),
     tool_results: dict.new(),
     context: list.new(),
+    incoming_user_msgs: list.new(),
     job_registry: agent_job.create_job_registry(),
     tool_box_subject: option.None,
     ws_subject: option.None,
@@ -88,7 +90,14 @@ fn msg_handler(
     }
 
     UserMessage(message) -> {
-      handle_reply(state, chatgpt.send_message(state.oai_client, message))
+      let new_state = AgentState(
+        ..state,
+        // Inefficient for now but idc.
+        incoming_user_msgs: list.append(state.incoming_user_msgs, [message])
+      )
+      // Probably move the message sending into another actor, a coordinator actor perhaps?
+      chatgpt.send_message(state.oai_client, message)
+      |> handle_reply(new_state, _)
     }
 
     ToolResults(results) -> {
@@ -115,8 +124,13 @@ fn handle_reply(
 ) -> actor.Next(AgentState, AgentMessage) {
   case response {
     Error(error) -> {
-      notify(state, chatgpt.describe_error(error))
-      actor.continue(state)
+      case error {
+        chatgpt.ToolsPending -> {}
+        _ -> {
+          notify(state, chatgpt.describe_error(error))
+          actor.continue(state)
+        }
+      }
     }
 
     Ok(#(client, reply)) -> {

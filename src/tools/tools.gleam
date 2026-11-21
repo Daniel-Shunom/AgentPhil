@@ -19,6 +19,11 @@ pub type ToolBox(a) {
   )
 }
 
+pub type ToolExecState {
+  Active
+  NotStarted
+}
+
 pub fn definitions() -> List(chatgpt.Tool) {
   let assert Ok(parameters) =
     json.parse(
@@ -53,6 +58,7 @@ pub fn init_toolbox(state) {
 fn on_message(state: ToolBox(a), msg: ToolMsg(a)) {
   case msg {
     Tool(call) -> {
+      /// We need to be able to set store this
       process.spawn_unlinked(fn() {
         let output = execute(call)
         case state.reciever {
@@ -72,6 +78,7 @@ fn on_message(state: ToolBox(a), msg: ToolMsg(a)) {
   }
 }
 
+/// Synchronous function call to execute generated commands
 fn execute(call: chatgpt.ToolCall) -> String {
   let result = case call.name {
     "exec" -> {
